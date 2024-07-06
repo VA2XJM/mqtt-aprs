@@ -14,6 +14,7 @@ __status__ = "Development"
 # Script based on mqtt-owfs-temp written by Kyle Gordon and converted for use with APRS
 # Source: https://github.com/kylegordon/mqtt-owfs-temp
 # Additional Python 3 development and conversions of Mike Loebl's code by Steve Miller, KC1AWV
+# More changes by Jean-Michel Vien, VA2XJM
 # Source: https://github.com/mloebl/mqtt-aprs
 # APRS is a registered trademark Bob Bruninga, WB4APR
 
@@ -44,7 +45,7 @@ MQTT_HOST = config.get("global", "mqtt_host")
 MQTT_PORT = config.getint("global", "mqtt_port")
 MQTT_TLS = config.getint("global", "mqtt_tls")
 MQTT_SUBTOPIC = config.get("global", "mqtt_subtopic")
-MQTT_TOPIC = "/raw/" + socket.getfqdn() + "/" + MQTT_SUBTOPIC
+MQTT_TOPIC = MQTT_SUBTOPIC + "raw"
 MQTT_USERNAME = config.get("global", "mqtt_username")
 MQTT_PASSWORD = config.get("global", "mqtt_password")
 METRICUNITS = config.get("global", "metricunits")
@@ -60,7 +61,7 @@ APRS_LATITUDE = config.get("global", "aprs_latitude")
 APRS_LONGITUDE = config.get("global", "aprs_longitude")
 
 APPNAME = MQTT_SUBTOPIC
-PRESENCETOPIC = "clients/" + socket.getfqdn() + "/" + APPNAME +"/state"
+PRESENCETOPIC = MQTT_SUBTOPIC + "clients/" + socket.getfqdn() +"/state"
 setproctitle.setproctitle(APPNAME)
 client_id = APPNAME + "_%d" % os.getpid()
 
@@ -271,13 +272,14 @@ def callback(packet):
                 logging.debug("position: %s", aprs_pos)
                 publish_aprstomqtt("position", aprs_pos)
             elif packet_format == 'object':
-                logging.debug("incoming object packet from: %s", ssid)
+                aprs_oname = aprspacket.get('object_name', 0)
+                logging.debug("incoming object packet %s from: %s", aprs_oname ssid)
                 aprs_lat = aprspacket.get('latitude', 0)
                 aprs_lon = aprspacket.get('longitude', 0)
                 aprs_course = aprspacket.get('course', 0)
                 aprs_speed = aprspacket.get('speed', 0)
                 aprs_comment = aprspacket.get('comment', 0)
-                aprs_pos = "{ \"ssid\": \"" + str(ssid) + "\", " \
+                aprs_pos = "{ \"ssid\": \"" + str(aprs_oname) + "\", " \
                              "\"comment\": \"" + str(aprs_comment) + "\", " \
                              "\"lat\": " + str(aprs_lat) + ", " \
                              "\"lon\": " + str(aprs_lon) + ", " \
